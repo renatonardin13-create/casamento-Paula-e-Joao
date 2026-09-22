@@ -144,15 +144,18 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
     <div className="min-h-screen bg-stone-50 text-stone-800">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-stone-800 text-white px-4 py-20">
-        <div 
-          className="absolute inset-0 bg-cover transition-transform duration-1000 scale-105"
-          style={{ 
-            backgroundImage: `url(${settings.hero_image_url})`,
-            opacity: settings.hero_opacity ?? 0.75,
-            backgroundPosition: 'center 25%'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-stone-900/30 to-stone-950/40" />
+        <div className="absolute inset-0 overflow-hidden">
+          <img 
+            src={settings.hero_image_url} 
+            alt="Capa do Casamento"
+            className="w-full h-full object-cover transition-transform duration-1000 scale-105"
+            style={{ 
+              objectPosition: 'center 15%',
+              opacity: settings.hero_opacity ?? 0.75 
+            }}
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-900/30 to-stone-950/40" />
 
         <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6">
           <span className="inline-block font-sans text-xs uppercase tracking-[0.3em] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-4 py-1.5 rounded-full backdrop-blur-xs">
