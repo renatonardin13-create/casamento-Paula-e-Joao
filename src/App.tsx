@@ -83,6 +83,7 @@ export default function App() {
         <PublicInvitation 
           settings={settings} 
           onDataRefreshNeeded={loadData} 
+          onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
         />
       ) : (
         <AdminPanel 

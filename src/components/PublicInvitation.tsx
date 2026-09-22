@@ -6,9 +6,10 @@ import { Calendar, Clock, MapPin, Heart, MessageCircle, Gift, Camera, Send, Chec
 interface Props {
   settings: WeddingSettings;
   onDataRefreshNeeded: () => void;
+  onOpenAdminLogin: () => void;
 }
 
-export function PublicInvitation({ settings, onDataRefreshNeeded }: Props) {
+export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLogin }: Props) {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [specialMessages, setSpecialMessages] = useState<SpecialMessage[]>([]);
@@ -540,7 +541,14 @@ export function PublicInvitation({ settings, onDataRefreshNeeded }: Props) {
       <footer className="bg-stone-900 text-white py-12 px-4 text-center space-y-4">
         <h3 className="font-romantic text-4xl text-amber-200">{settings.groom_name} & {settings.bride_name}</h3>
         <p className="text-xs text-stone-400">07 de Novembro de 2026 • {settings.venue_name}</p>
-        <p className="text-[10px] text-stone-500 uppercase tracking-widest pt-4">Sistema Centralizado Supabase Multi-Dispositivo</p>
+        <div className="pt-4">
+          <button
+            onClick={onOpenAdminLogin}
+            className="text-[11px] text-stone-500 hover:text-stone-300 underline transition-colors"
+          >
+            🔒 Acesso Restrito (Administrador)
+          </button>
+        </div>
       </footer>
     </div>
   );
