@@ -133,12 +133,15 @@ export function PublicInvitation({ settings, onDataRefreshNeeded }: Props) {
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-stone-900 text-white px-4 py-20">
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-stone-800 text-white px-4 py-20">
         <div 
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay scale-105 transition-transform duration-1000"
-          style={{ backgroundImage: `url(${settings.hero_image_url})` }}
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
+          style={{ 
+            backgroundImage: `url(${settings.hero_image_url})`,
+            opacity: settings.hero_opacity ?? 0.75 
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-stone-900/30 to-stone-950/40" />
 
         <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6">
           <span className="inline-block font-sans text-xs uppercase tracking-[0.3em] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-4 py-1.5 rounded-full backdrop-blur-xs">

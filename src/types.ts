@@ -16,6 +16,7 @@ export interface WeddingSettings {
   pix_key: string;
   gift_registry_url: string;
   background_image_url: string;
+  hero_opacity?: number;
   music_url: string;
   music_enabled: boolean;
   whatsapp_message_confirmed: string;

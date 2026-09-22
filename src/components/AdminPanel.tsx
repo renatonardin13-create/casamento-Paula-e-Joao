@@ -525,6 +525,21 @@ export function AdminPanel({ initialSettings, onSettingsUpdated, onOpenSupabaseM
                     <input type="file" accept="image/*" onChange={handleHeroImageUpload} className="hidden" />
                   </label>
                 </div>
+                <div className="pt-2">
+                  <label className="block text-xs font-medium text-stone-600 mb-1">
+                    Clareza / Opacidade da Imagem Principal: {Math.round((settings.hero_opacity ?? 0.75) * 100)}%
+                  </label>
+                  <input 
+                    type="range"
+                    min="0.4"
+                    max="0.95"
+                    step="0.05"
+                    value={settings.hero_opacity ?? 0.75}
+                    onChange={(e) => setSettings({ ...settings, hero_opacity: parseFloat(e.target.value) })}
+                    className="w-full accent-amber-600"
+                  />
+                  <span className="text-[10px] text-stone-400">Arraste para clarear ou escurecer a foto de fundo na capa do convite.</span>
+                </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-6">

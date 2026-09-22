@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: WeddingSettings = {
   pix_key: 'casamento@joaopaulamarques.com.br',
   gift_registry_url: 'https://noivos.exemplo.com/joao-e-paula',
   background_image_url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1600&q=80',
+  hero_opacity: 0.7,
   music_url: '',
   music_enabled: false,
   whatsapp_message_confirmed: 'Olá! Confirmo minha presença no casamento de João & Paula. Estamos muito felizes!',
