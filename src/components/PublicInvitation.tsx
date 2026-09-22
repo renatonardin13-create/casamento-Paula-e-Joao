@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { WeddingSettings, GalleryItem, Wish, SpecialMessage } from '../types';
 import { getGuests, createGuest, getWishes, createWish, getGallery, getSpecialMessages } from '../lib/dataService';
-import { Calendar, Clock, MapPin, Heart, MessageCircle, Gift, Camera, Send, CheckCircle2, Navigation, Sparkles, Phone, User, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Heart, MessageCircle, Gift, Camera, Send, CheckCircle2, Navigation, Sparkles, Phone, User, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   settings: WeddingSettings;
@@ -31,10 +31,19 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
 
   // Countdown timer state
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     loadPublicData();
   }, []);
+
+  useEffect(() => {
+    if (gallery.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % gallery.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [gallery.length]);
 
   useEffect(() => {
     const targetDate = new Date(`${settings.wedding_date}T${settings.wedding_time}:00`);
@@ -392,28 +401,62 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
         </div>
       </section>
 
-      {/* Gallery Section */}
+      {/* Gallery Slideshow Section */}
       {gallery.length > 0 && (
-        <section className="py-20 px-4 max-w-6xl mx-auto">
+        <section className="py-20 px-4 max-w-4xl mx-auto">
           <div className="text-center space-y-2 mb-12">
             <span className="text-xs uppercase tracking-[0.2em] font-semibold text-amber-700">Álbuns & Momentos</span>
             <h2 className="text-3xl font-serif-display font-bold text-stone-900">Galeria de Fotos</h2>
-            <p className="text-stone-500 text-sm">Registros salvos na base central e visíveis em qualquer dispositivo</p>
+            <p className="text-stone-500 text-sm">Momentos especiais da nossa história de amor</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {gallery.map((item) => (
-              <div key={item.id} className="group relative rounded-2xl overflow-hidden shadow-md bg-white border border-stone-200 aspect-square">
-                <img 
-                  src={item.image_url} 
-                  alt={item.caption || 'Foto do Casal'} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-stone-900 aspect-[16/10] sm:aspect-[16/9] border border-stone-200">
+            <div className="absolute inset-0">
+              <img 
+                src={gallery[currentSlide]?.image_url} 
+                alt={gallery[currentSlide]?.caption || 'Foto do Casal'} 
+                className="w-full h-full object-cover transition-all duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent" />
+            </div>
+
+            {/* Caption */}
+            <div className="absolute bottom-0 inset-x-0 p-6 sm:p-8 text-center text-white space-y-2 z-10">
+              <p className="font-serif-display text-lg sm:text-2xl font-medium tracking-wide text-amber-100">
+                {gallery[currentSlide]?.caption || 'Nossos Momentos'}
+              </p>
+              <p className="text-xs text-stone-400">
+                Foto {currentSlide + 1} de {gallery.length}
+              </p>
+            </div>
+
+            {/* Navigation Buttons */}
+            <button 
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + gallery.length) % gallery.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all shadow-lg z-20"
+              aria-label="Foto anterior"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <button 
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % gallery.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all shadow-lg z-20"
+              aria-label="Próxima foto"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+
+            {/* Dots */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {gallery.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`h-2 rounded-full transition-all ${currentSlide === idx ? 'w-8 bg-amber-400' : 'w-2 bg-white/50 hover:bg-white'}`}
+                  aria-label={`Ir para foto ${idx + 1}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                  <p className="text-white text-xs font-medium">{item.caption}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
       )}
