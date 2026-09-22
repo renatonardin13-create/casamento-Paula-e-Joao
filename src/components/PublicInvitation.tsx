@@ -136,10 +136,11 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-stone-800 text-white px-4 py-20">
         <div 
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
+          className="absolute inset-0 bg-cover transition-transform duration-1000 scale-105"
           style={{ 
             backgroundImage: `url(${settings.hero_image_url})`,
-            opacity: settings.hero_opacity ?? 0.75 
+            opacity: settings.hero_opacity ?? 0.75,
+            backgroundPosition: 'center 25%'
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-stone-900/30 to-stone-950/40" />
@@ -520,7 +521,7 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
               <Sparkles className="h-6 w-6" />
             </div>
             <h3 className="font-serif-display font-bold text-xl text-stone-900">Presente via PIX</h3>
-            <p className="text-sm text-stone-600">Caso prefira nos presentear via PIX, utilize nossa chave abaixo:</p>
+            <p className="text-sm text-stone-600">Caso prefira nos presentear via PIX, utilize nossa chave abaixo ou o que Deus preparar:</p>
             <div className="bg-stone-50 rounded-xl p-3 border border-stone-200 font-mono text-xs text-stone-800 select-all">
               {settings.pix_key}
             </div>
