@@ -9,7 +9,6 @@ interface Props {
 }
 
 export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -21,60 +20,34 @@ export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
     setLoading(true);
     setErrorMsg(null);
 
-    // If password is the legacy admin pin or similar, allow direct entry for smooth testing/preview
-    if (password === '978512' || password === 'admin123') {
+    if (password === '978512') {
       sessionStorage.setItem('admin_auth', 'true');
       setLoading(false);
+      setPassword('');
       onSuccess();
       onClose();
       return;
     }
 
     const sb = getSupabase();
-    if (!sb) {
-      // If Supabase is not connected, allow admin login with pin 978512 or admin123
-      if (password === '978512' || password === 'admin123') {
-        sessionStorage.setItem('admin_auth', 'true');
-        setLoading(false);
-        onSuccess();
-        onClose();
-        return;
-      }
-      setErrorMsg('Supabase não configurado. Use a senha de acesso rápido (978512).');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Try Supabase auth first if email is provided
-      if (email.includes('@')) {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        if (data.session) {
+    if (sb) {
+      try {
+        // Try admin email with this password if configured in supabase auth
+        const { data, error } = await sb.auth.signInWithPassword({ email: 'admin@joaopaulamarques.com.br', password });
+        if (!error && data.session) {
           sessionStorage.setItem('admin_auth', 'true');
-          setErrorMsg(null);
-          setEmail('');
           setPassword('');
           onSuccess();
           onClose();
           return;
         }
+      } catch (e) {
+        // ignore
       }
-
-      // Fallback check for PIN if email is blank or not a valid supabase auth user
-      if (password === '978512') {
-        sessionStorage.setItem('admin_auth', 'true');
-        onSuccess();
-        onClose();
-        return;
-      }
-
-      throw new Error('Credenciais inválidas.');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Falha na autenticação. Verifique suas credenciais.');
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
+    setErrorMsg('Senha incorreta. Utilize a senha 978512.');
   };
 
   return (
@@ -93,47 +66,27 @@ export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
           </div>
           <div>
             <h3 className="text-xl font-serif font-bold text-stone-900">Acesso Administrativo</h3>
-            <p className="text-xs text-stone-500">Autenticação via Supabase Auth</p>
+            <p className="text-xs text-stone-500">Digite a senha de acesso</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
-              E-mail do Administrador
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-stone-400" />
-              <input 
-                type="email"
-                placeholder="admin@joaopaulamarques.com.br"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setErrorMsg(null);
-                }}
-                className="w-full rounded-xl border border-stone-300 pl-10 pr-4 py-3 text-sm focus:border-[#123D2C] focus:outline-none focus:ring-1 focus:ring-[#123D2C]"
-                autoFocus
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
-              Senha
+              Senha de Acesso
             </label>
             <div className="relative">
               <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-stone-400" />
               <input 
                 type="password"
-                placeholder="••••••••"
+                placeholder="••••••"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setErrorMsg(null);
                 }}
                 className="w-full rounded-xl border border-stone-300 pl-10 pr-4 py-3 text-sm focus:border-[#123D2C] focus:outline-none focus:ring-1 focus:ring-[#123D2C] font-mono tracking-widest"
+                autoFocus
                 required
               />
             </div>
