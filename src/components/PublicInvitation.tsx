@@ -143,13 +143,12 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
       {/* Hero Photo Banner */}
-      <section className="relative h-[65vh] sm:h-[75vh] w-full overflow-hidden bg-stone-900">
+      <section className="relative h-[60vh] sm:h-[70vh] w-full overflow-hidden bg-stone-900">
         <img 
           src={settings.hero_image_url} 
           alt="Capa do Casamento"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center"
           style={{ 
-            objectPosition: 'center 20%',
             opacity: settings.hero_opacity ?? 0.8 
           }}
         />
