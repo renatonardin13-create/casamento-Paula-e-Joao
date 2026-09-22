@@ -21,9 +21,27 @@ export default function App() {
     setIsSupabaseConnected(!!sb);
   };
 
-  const checkAuth = () => {
-    const auth = sessionStorage.getItem('admin_auth') === 'true';
-    setIsAdminAuthenticated(auth);
+  const initAuth = async () => {
+    const sb = getSupabase();
+    if (!sb) {
+      setIsAdminAuthenticated(false);
+      return;
+    }
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      setIsAdminAuthenticated(!!session);
+
+      const { data: { subscription } } = sb.auth.onAuthStateChange((_, session) => {
+        setIsAdminAuthenticated(!!session);
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch (e) {
+      console.warn('Auth session check error:', e);
+      setIsAdminAuthenticated(false);
+    }
   };
 
   const loadData = async () => {
@@ -32,7 +50,7 @@ export default function App() {
       const data = await getWeddingSettings();
       setSettings(data);
     } catch (e) {
-      console.error('Error loading wedding settings:', e);
+      console.error('Error loading wedding settings from Supabase:', e);
     } finally {
       setLoading(false);
     }
@@ -40,9 +58,18 @@ export default function App() {
 
   useEffect(() => {
     checkConnection();
-    checkAuth();
+    initAuth();
     loadData();
   }, []);
+
+  const handleLogoutAdmin = async () => {
+    const sb = getSupabase();
+    if (sb) {
+      await sb.auth.signOut();
+    }
+    setIsAdminAuthenticated(false);
+    setView('public');
+  };
 
   if (loading || !settings) {
     return (
@@ -69,11 +96,7 @@ export default function App() {
         onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
         isSupabaseConnected={isSupabaseConnected}
         isAdminAuthenticated={isAdminAuthenticated}
-        onLogoutAdmin={() => {
-          sessionStorage.removeItem('admin_auth');
-          setIsAdminAuthenticated(false);
-          setView('public');
-        }}
+        onLogoutAdmin={handleLogoutAdmin}
       />
 
       {view === 'public' || !isAdminAuthenticated ? (

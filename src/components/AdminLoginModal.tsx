@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, KeyRound, X, ShieldCheck } from 'lucide-react';
+import { getSupabase } from '../lib/supabase';
+import { Lock, KeyRound, Mail, X, ShieldCheck } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -8,21 +9,39 @@ interface Props {
 }
 
 export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === '978512') {
-      sessionStorage.setItem('admin_auth', 'true');
-      setError(false);
-      setPassword('');
-      onSuccess();
-      onClose();
-    } else {
-      setError(true);
+    setLoading(true);
+    setErrorMsg(null);
+
+    const sb = getSupabase();
+    if (!sb) {
+      setErrorMsg('Supabase não configurado.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.session) {
+        setErrorMsg(null);
+        setEmail('');
+        setPassword('');
+        onSuccess();
+        onClose();
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Falha na autenticação. Verifique seu e-mail e senha.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,37 +56,57 @@ export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#123D2C]/10 text-[#123D2C]">
             <Lock className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-xl font-serif-display font-bold text-stone-900">Acesso Restrito ao Administrador</h3>
-            <p className="text-xs text-stone-500">Digite a senha para acessar o painel de controle</p>
+            <h3 className="text-xl font-serif font-bold text-stone-900">Acesso Administrativo</h3>
+            <p className="text-xs text-stone-500">Autenticação via Supabase Auth</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
-              Senha de Acesso
+              E-mail do Administrador
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-stone-400" />
+              <input 
+                type="email"
+                placeholder="admin@joaopaulamarques.com.br"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrorMsg(null);
+                }}
+                className="w-full rounded-xl border border-stone-300 pl-10 pr-4 py-3 text-sm focus:border-[#123D2C] focus:outline-none focus:ring-1 focus:ring-[#123D2C]"
+                autoFocus
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+              Senha
             </label>
             <div className="relative">
               <KeyRound className="absolute left-3.5 top-3 h-4 w-4 text-stone-400" />
               <input 
                 type="password"
-                placeholder="••••••"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  setError(false);
+                  setErrorMsg(null);
                 }}
-                className="w-full rounded-xl border border-stone-300 pl-10 pr-4 py-3 text-sm focus:border-amber-600 focus:outline-none focus:ring-1 focus:ring-amber-600 font-mono tracking-widest"
-                autoFocus
+                className="w-full rounded-xl border border-stone-300 pl-10 pr-4 py-3 text-sm focus:border-[#123D2C] focus:outline-none focus:ring-1 focus:ring-[#123D2C] font-mono tracking-widest"
                 required
               />
             </div>
-            {error && (
-              <p className="text-xs text-rose-600 mt-1.5 font-medium">Senha incorreta. Tente novamente.</p>
+            {errorMsg && (
+              <p className="text-xs text-rose-600 mt-1.5 font-medium">{errorMsg}</p>
             )}
           </div>
 
@@ -81,10 +120,11 @@ export function AdminLoginModal({ isOpen, onClose, onSuccess }: Props) {
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-semibold py-3 text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              className="flex-1 rounded-xl bg-[#123D2C] hover:bg-[#0B241B] text-white font-semibold py-3 text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <ShieldCheck className="h-4 w-4" />
-              <span>Entrar no Painel</span>
+              <span>{loading ? 'Entrando...' : 'Entrar no Painel'}</span>
             </button>
           </div>
         </form>

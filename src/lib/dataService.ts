@@ -1,9 +1,9 @@
 import { getSupabase } from './supabase';
 import { WeddingSettings, Guest, Wish, GalleryItem, SpecialMessage } from '../types';
 
-const DEFAULT_WEDDING_ID = 'joao-paula-2026';
+export const DEFAULT_WEDDING_ID = 'joao-paula-2026';
 
-const DEFAULT_SETTINGS: WeddingSettings = {
+export const DEFAULT_SETTINGS: WeddingSettings = {
   id: '1',
   wedding_id: DEFAULT_WEDDING_ID,
   groom_name: 'João Carlos Marques',
@@ -50,25 +50,7 @@ const DEFAULT_SPECIAL_MESSAGES: SpecialMessage[] = [
   { id: '1', wedding_id: DEFAULT_WEDDING_ID, title: 'Dress Code Sugerido', content: 'Esporte Fino / Passeio. Sugerimos tons pastéis para as madrinhas e terno sem gravata para os padrinhos.', is_active: true }
 ];
 
-// Helper for localStorage fallback
-function getLocal<T>(key: string, defaultValue: T): T {
-  try {
-    const val = localStorage.getItem(`wedding_${key}`);
-    return val ? JSON.parse(val) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-}
-
-function setLocal<T>(key: string, value: T): void {
-  try {
-    localStorage.setItem(`wedding_${key}`, JSON.stringify(value));
-  } catch (e) {
-    console.error('LocalStorage save error:', e);
-  }
-}
-
-async function withTimeout<T>(queryFactory: () => PromiseLike<T>, timeoutMs = 3000): Promise<T> {
+async function withTimeout<T>(queryFactory: () => PromiseLike<T>, timeoutMs = 5000): Promise<T> {
   let timeoutId: any;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error('Supabase request timeout')), timeoutMs);
@@ -85,23 +67,32 @@ async function withTimeout<T>(queryFactory: () => PromiseLike<T>, timeoutMs = 30
 
 export async function getWeddingSettings(): Promise<WeddingSettings> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await withTimeout(() =>
-        sb.from('wedding_settings').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).single()
-      );
-      if (data && !error) {
-        setLocal('settings', data);
-        return data as WeddingSettings;
-      }
-    } catch (e) {
-      console.warn('Supabase fetch settings failed, falling back to local/cache:', e);
-    }
+  if (!sb) {
+    console.warn('Supabase not configured. Using default settings.');
+    return DEFAULT_SETTINGS;
   }
-  return getLocal('settings', DEFAULT_SETTINGS);
+
+  const { data, error } = await withTimeout(() =>
+    sb.from('wedding_settings').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).maybeSingle()
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return DEFAULT_SETTINGS;
+  }
+
+  return data as WeddingSettings;
 }
 
 export async function updateWeddingSettings(settings: Partial<WeddingSettings>): Promise<WeddingSettings> {
+  const sb = getSupabase();
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
+  }
+
   const current = await getWeddingSettings();
   const updated: WeddingSettings = {
     ...current,
@@ -109,54 +100,51 @@ export async function updateWeddingSettings(settings: Partial<WeddingSettings>):
     updated_at: new Date().toISOString()
   };
 
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data: existing } = await sb
-        .from('wedding_settings')
-        .select('id')
-        .eq('wedding_id', DEFAULT_WEDDING_ID)
-        .maybeSingle();
+  const { data: existing } = await sb
+    .from('wedding_settings')
+    .select('id')
+    .eq('wedding_id', DEFAULT_WEDDING_ID)
+    .maybeSingle();
 
-      if (existing && existing.id) {
-        const { error } = await sb
-          .from('wedding_settings')
-          .update(updated)
-          .eq('id', existing.id);
-        if (error) console.warn('Supabase update settings error:', error);
-      } else {
-        const { error } = await sb
-          .from('wedding_settings')
-          .insert([{ ...updated, wedding_id: DEFAULT_WEDDING_ID }]);
-        if (error) console.warn('Supabase insert settings error:', error);
-      }
-    } catch (e) {
-      console.warn('Supabase update settings exception:', e);
-    }
+  if (existing && existing.id) {
+    const { error } = await sb
+      .from('wedding_settings')
+      .update(updated)
+      .eq('id', existing.id);
+    if (error) throw error;
+  } else {
+    const { error } = await sb
+      .from('wedding_settings')
+      .insert([{ ...updated, wedding_id: DEFAULT_WEDDING_ID }]);
+    if (error) throw error;
   }
-  setLocal('settings', updated);
+
   return updated;
 }
 
 export async function getGuests(): Promise<Guest[]> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await withTimeout(() =>
-        sb.from('guests').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
-      );
-      if (data && !error) {
-        setLocal('guests', data);
-        return data as Guest[];
-      }
-    } catch (e) {
-      console.warn('Supabase fetch guests failed:', e);
-    }
+  if (!sb) {
+    return DEFAULT_GUESTS;
   }
-  return getLocal('guests', DEFAULT_GUESTS);
+
+  const { data, error } = await withTimeout(() =>
+    sb.from('guests').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return (data && data.length > 0 ? data : DEFAULT_GUESTS) as Guest[];
 }
 
 export async function createGuest(guest: Omit<Guest, 'id' | 'wedding_id' | 'created_at' | 'updated_at'>): Promise<Guest> {
+  const sb = getSupabase();
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
+  }
+
   const newGuest: Guest = {
     id: 'g_' + Math.random().toString(36).substring(2, 9),
     wedding_id: DEFAULT_WEDDING_ID,
@@ -165,69 +153,57 @@ export async function createGuest(guest: Omit<Guest, 'id' | 'wedding_id' | 'crea
     updated_at: new Date().toISOString()
   };
 
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { error } = await sb.from('guests').insert([newGuest]);
-      if (error) throw error;
-    } catch (e) {
-      console.error('Supabase create guest error:', e);
-    }
-  }
+  const { error } = await sb.from('guests').insert([newGuest]);
+  if (error) throw error;
 
-  const current = await getGuests();
-  const updated = [newGuest, ...current];
-  setLocal('guests', updated);
   return newGuest;
 }
 
 export async function updateGuestStatus(id: string, status: 'pending' | 'confirmed' | 'declined'): Promise<void> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('guests').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
-    } catch (e) {
-      console.error('Supabase update guest error:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
   }
-  const current = await getGuests();
-  const updated = current.map(g => g.id === id ? { ...g, status, updated_at: new Date().toISOString() } : g);
-  setLocal('guests', updated);
+
+  const { error } = await sb
+    .from('guests')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export async function deleteGuest(id: string): Promise<void> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('guests').delete().eq('id', id);
-    } catch (e) {
-      console.error('Supabase delete guest error:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
   }
-  const current = await getGuests();
-  const updated = current.filter(g => g.id !== id);
-  setLocal('guests', updated);
+
+  const { error } = await sb.from('guests').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function getWishes(): Promise<Wish[]> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await withTimeout(() =>
-        sb.from('wishes').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
-      );
-      if (data && !error) {
-        setLocal('wishes', data);
-        return data as Wish[];
-      }
-    } catch (e) {
-      console.warn('Supabase fetch wishes failed:', e);
-    }
+  if (!sb) {
+    return DEFAULT_WISHES;
   }
-  return getLocal('wishes', DEFAULT_WISHES);
+
+  const { data, error } = await withTimeout(() =>
+    sb.from('wishes').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
+  );
+
+  if (error) throw error;
+
+  return (data && data.length > 0 ? data : DEFAULT_WISHES) as Wish[];
 }
 
 export async function createWish(wish: Omit<Wish, 'id' | 'wedding_id' | 'created_at'>): Promise<Wish> {
+  const sb = getSupabase();
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
+  }
+
   const newWish: Wish = {
     id: 'w_' + Math.random().toString(36).substring(2, 9),
     wedding_id: DEFAULT_WEDDING_ID,
@@ -235,55 +211,43 @@ export async function createWish(wish: Omit<Wish, 'id' | 'wedding_id' | 'created
     created_at: new Date().toISOString()
   };
 
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { error } = await sb.from('wishes').insert([newWish]);
-      if (error) throw error;
-    } catch (e) {
-      console.error('Supabase create wish error:', e);
-    }
-  }
+  const { error } = await sb.from('wishes').insert([newWish]);
+  if (error) throw error;
 
-  const current = await getWishes();
-  const updated = [newWish, ...current];
-  setLocal('wishes', updated);
   return newWish;
 }
 
 export async function deleteWish(id: string): Promise<void> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('wishes').delete().eq('id', id);
-    } catch (e) {
-      console.error('Supabase delete wish error:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
   }
-  const current = await getWishes();
-  const updated = current.filter(w => w.id !== id);
-  setLocal('wishes', updated);
+
+  const { error } = await sb.from('wishes').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function getGallery(): Promise<GalleryItem[]> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await withTimeout(() =>
-        sb.from('gallery').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('sort_order', { ascending: true })
-      );
-      if (data && !error) {
-        setLocal('gallery', data);
-        return data as GalleryItem[];
-      }
-    } catch (e) {
-      console.warn('Supabase fetch gallery failed:', e);
-    }
+  if (!sb) {
+    return DEFAULT_GALLERY;
   }
-  return getLocal('gallery', DEFAULT_GALLERY);
+
+  const { data, error } = await withTimeout(() =>
+    sb.from('gallery').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('sort_order', { ascending: true })
+  );
+
+  if (error) throw error;
+
+  return (data && data.length > 0 ? data : DEFAULT_GALLERY) as GalleryItem[];
 }
 
 export async function addGalleryItem(item: Omit<GalleryItem, 'id' | 'wedding_id' | 'created_at'>): Promise<GalleryItem> {
+  const sb = getSupabase();
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
+  }
+
   const newItem: GalleryItem = {
     id: 'gal_' + Math.random().toString(36).substring(2, 9),
     wedding_id: DEFAULT_WEDDING_ID,
@@ -291,104 +255,84 @@ export async function addGalleryItem(item: Omit<GalleryItem, 'id' | 'wedding_id'
     created_at: new Date().toISOString()
   };
 
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      const { error } = await sb.from('gallery').insert([newItem]);
-      if (error) throw error;
-    } catch (e) {
-      console.error('Supabase add gallery error:', e);
-    }
-  }
+  const { error } = await sb.from('gallery').insert([newItem]);
+  if (error) throw error;
 
-  const current = await getGallery();
-  const updated = [...current, newItem];
-  setLocal('gallery', updated);
   return newItem;
 }
 
 export async function deleteGalleryItem(id: string): Promise<void> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('gallery').delete().eq('id', id);
-    } catch (e) {
-      console.error('Supabase delete gallery error:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
   }
-  const current = await getGallery();
-  const updated = current.filter(g => g.id !== id);
-  setLocal('gallery', updated);
+
+  const { error } = await sb.from('gallery').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function getSpecialMessages(): Promise<SpecialMessage[]> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const { data, error } = await withTimeout(() =>
-        sb.from('special_messages').select('*').eq('wedding_id', DEFAULT_WEDDING_ID)
-      );
-      if (data && !error) {
-        setLocal('special_messages', data);
-        return data as SpecialMessage[];
-      }
-    } catch (e) {
-      console.warn('Supabase fetch special messages failed:', e);
-    }
+  if (!sb) {
+    return DEFAULT_SPECIAL_MESSAGES;
   }
-  return getLocal('special_messages', DEFAULT_SPECIAL_MESSAGES);
+
+  const { data, error } = await withTimeout(() =>
+    sb.from('special_messages').select('*').eq('wedding_id', DEFAULT_WEDDING_ID)
+  );
+
+  if (error) throw error;
+
+  return (data && data.length > 0 ? data : DEFAULT_SPECIAL_MESSAGES) as SpecialMessage[];
 }
 
 export async function saveSpecialMessage(msg: Omit<SpecialMessage, 'id' | 'wedding_id' | 'created_at'>): Promise<SpecialMessage> {
+  const sb = getSupabase();
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
+  }
+
   const newMsg: SpecialMessage = {
     id: 'sm_' + Math.random().toString(36).substring(2, 9),
     wedding_id: DEFAULT_WEDDING_ID,
     ...msg,
     created_at: new Date().toISOString()
   };
-  const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('special_messages').insert([newMsg]);
-    } catch (e) {
-      console.error('Supabase save special message error:', e);
-    }
-  }
-  const current = await getSpecialMessages();
-  const updated = [newMsg, ...current];
-  setLocal('special_messages', updated);
+
+  const { error } = await sb.from('special_messages').insert([newMsg]);
+  if (error) throw error;
+
   return newMsg;
 }
 
 export async function deleteSpecialMessage(id: string): Promise<void> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      await sb.from('special_messages').delete().eq('id', id);
-    } catch (e) {
-      console.error('Supabase delete special message error:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado.');
   }
-  const current = await getSpecialMessages();
-  const updated = current.filter(m => m.id !== id);
-  setLocal('special_messages', updated);
+
+  const { error } = await sb.from('special_messages').delete().eq('id', id);
+  if (error) throw error;
 }
 
-// Upload file to Supabase Storage bucket ('wedding-assets')
 export async function uploadImageToStorage(file: File, folder: string = 'images'): Promise<string> {
   const sb = getSupabase();
   if (!sb) {
     throw new Error('Supabase não está configurado. Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.');
   }
+
   const fileExt = file.name.split('.').pop() || 'jpg';
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+  
   const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file);
   if (uploadError) {
     throw uploadError;
   }
+
   const { data } = sb.storage.from('wedding-assets').getPublicUrl(fileName);
   if (!data?.publicUrl) {
     throw new Error('Não foi possível obter a URL pública do arquivo enviado.');
   }
+
   return data.publicUrl;
 }
