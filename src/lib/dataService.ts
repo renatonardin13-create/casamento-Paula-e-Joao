@@ -315,28 +315,45 @@ export async function deleteSpecialMessage(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function uploadImageToStorage(file: File, folder: string = 'images'): Promise<string> {
+export async function uploadImageToStorage(file: File, folder: 'hero' | 'background' | 'gallery' | 'assets' = 'assets'): Promise<string> {
   const sb = getSupabase();
   if (!sb) {
-    throw new Error('Supabase não está configurado. Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.');
+    throw new Error('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.');
   }
 
-  const fileExt = file.name.split('.').pop() || 'jpg';
-  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-  
-  const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file, {
-    cacheControl: '3600',
-    upsert: true
-  });
-  
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  // Generate unique UUID-based filename
+  const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID 
+    ? crypto.randomUUID() 
+    : 'img_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+  const fileName = `${folder}/${uniqueId}.${fileExt}`;
+
+  // Direct upload without using upsert as a workaround for permissions
+  const { error: uploadError } = await sb.storage
+    .from('wedding-assets')
+    .upload(fileName, file, {
+      contentType: file.type || `image/${fileExt}`
+    });
+
   if (uploadError) {
-    console.error('Supabase Storage Upload Error Details:', uploadError);
-    throw new Error(`Erro no Storage do Supabase: ${uploadError.message || 'Falha ao enviar arquivo'}. Verifique se o bucket 'wedding-assets' existe e possui políticas RLS configuradas.`);
+    console.error('Supabase Storage upload error:', uploadError);
+    const msg = uploadError.message || '';
+    
+    // Explicit bucket and RLS detection
+    if (msg.toLowerCase().includes('bucket not found') || (uploadError as any).statusCode === '404' || (uploadError as any).status === 404) {
+      throw new Error("Erro no Supabase Storage: Bucket 'wedding-assets' não encontrado. Crie o bucket 'wedding-assets' como público no painel do Supabase.");
+    }
+    
+    if (msg.toLowerCase().includes('row-level security') || msg.toLowerCase().includes('violates row-level security') || (uploadError as any).statusCode === '403' || (uploadError as any).status === 403) {
+      throw new Error("Erro no Supabase Storage (RLS): Permissão de gravação negada. Verifique as policies de INSERT/UPDATE da tabela storage.objects para o bucket 'wedding-assets'.");
+    }
+
+    throw new Error(`Erro no Supabase Storage: ${msg}`);
   }
 
   const { data } = sb.storage.from('wedding-assets').getPublicUrl(fileName);
   if (!data?.publicUrl) {
-    throw new Error('Não foi possível obter a URL pública do arquivo enviado.');
+    throw new Error('Não foi possível obter a URL pública permanente do arquivo no Storage.');
   }
 
   return data.publicUrl;

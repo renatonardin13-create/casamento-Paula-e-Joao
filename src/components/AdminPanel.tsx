@@ -111,7 +111,7 @@ export function AdminPanel({ initialSettings, onSettingsUpdated }: Props) {
     if (!file) return;
     setUploadingImage(true);
     try {
-      const url = await uploadImageToStorage(file, 'bg');
+      const url = await uploadImageToStorage(file, 'background');
       setSettings(prev => ({ ...prev, background_image_url: url }));
     } catch (err: any) {
       console.error('Upload background error:', err);
