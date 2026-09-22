@@ -5,10 +5,21 @@ interface Props {
   view: 'public' | 'admin';
   onChangeView: (v: 'public' | 'admin') => void;
   onOpenSupabaseModal: () => void;
+  onOpenAdminLogin: () => void;
   isSupabaseConnected: boolean;
+  isAdminAuthenticated: boolean;
+  onLogoutAdmin: () => void;
 }
 
-export function Navbar({ view, onChangeView, onOpenSupabaseModal, isSupabaseConnected }: Props) {
+export function Navbar({ 
+  view, 
+  onChangeView, 
+  onOpenSupabaseModal, 
+  onOpenAdminLogin,
+  isSupabaseConnected, 
+  isAdminAuthenticated,
+  onLogoutAdmin 
+}: Props) {
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -38,20 +49,35 @@ export function Navbar({ view, onChangeView, onOpenSupabaseModal, isSupabaseConn
 
           {view === 'public' ? (
             <button
-              onClick={() => onChangeView('admin')}
+              onClick={() => {
+                if (isAdminAuthenticated) {
+                  onChangeView('admin');
+                } else {
+                  onOpenAdminLogin();
+                }
+              }}
               className="flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-all"
             >
               <Settings className="h-3.5 w-3.5" />
               <span>Painel Admin</span>
             </button>
           ) : (
-            <button
-              onClick={() => onChangeView('public')}
-              className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-all"
-            >
-              <Home className="h-3.5 w-3.5" />
-              <span>Ver Convite Público</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onChangeView('public')}
+                className="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-all"
+              >
+                <Home className="h-3.5 w-3.5" />
+                <span>Ver Convite Público</span>
+              </button>
+              <button
+                onClick={onLogoutAdmin}
+                className="bg-stone-200 hover:bg-stone-300 text-stone-700 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                title="Sair do Painel Admin"
+              >
+                Sair
+              </button>
+            </div>
           )}
         </div>
       </div>

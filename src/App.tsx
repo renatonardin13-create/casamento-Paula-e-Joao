@@ -6,6 +6,7 @@ import { Navbar } from './components/Navbar';
 import { PublicInvitation } from './components/PublicInvitation';
 import { AdminPanel } from './components/AdminPanel';
 import { SupabaseSetupModal } from './components/SupabaseSetupModal';
+import { AdminLoginModal } from './components/AdminLoginModal';
 import { Heart } from 'lucide-react';
 
 export default function App() {
@@ -13,11 +14,18 @@ export default function App() {
   const [settings, setSettings] = useState<WeddingSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
   const checkConnection = () => {
     const sb = getSupabase();
     setIsSupabaseConnected(!!sb);
+  };
+
+  const checkAuth = () => {
+    const auth = sessionStorage.getItem('admin_auth') === 'true';
+    setIsAdminAuthenticated(auth);
   };
 
   const loadData = async () => {
@@ -34,6 +42,7 @@ export default function App() {
 
   useEffect(() => {
     checkConnection();
+    checkAuth();
     loadData();
   }, []);
 
@@ -52,12 +61,25 @@ export default function App() {
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans-text">
       <Navbar 
         view={view} 
-        onChangeView={setView} 
+        onChangeView={(v) => {
+          if (v === 'admin' && !isAdminAuthenticated) {
+            setIsAdminLoginOpen(true);
+          } else {
+            setView(v);
+          }
+        }} 
         onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
+        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
         isSupabaseConnected={isSupabaseConnected}
+        isAdminAuthenticated={isAdminAuthenticated}
+        onLogoutAdmin={() => {
+          sessionStorage.removeItem('admin_auth');
+          setIsAdminAuthenticated(false);
+          setView('public');
+        }}
       />
 
-      {view === 'public' ? (
+      {view === 'public' || !isAdminAuthenticated ? (
         <PublicInvitation 
           settings={settings} 
           onDataRefreshNeeded={loadData} 
@@ -76,6 +98,15 @@ export default function App() {
         onSuccess={() => {
           checkConnection();
           loadData();
+        }}
+      />
+
+      <AdminLoginModal 
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthenticated(true);
+          setView('admin');
         }}
       />
     </div>
