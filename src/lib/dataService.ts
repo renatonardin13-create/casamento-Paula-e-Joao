@@ -68,15 +68,28 @@ function setLocal<T>(key: string, value: T): void {
   }
 }
 
+async function withTimeout<T>(queryFactory: () => PromiseLike<T>, timeoutMs = 3000): Promise<T> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Supabase request timeout')), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([queryFactory(), timeoutPromise]);
+    clearTimeout(timeoutId);
+    return result;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    throw e;
+  }
+}
+
 export async function getWeddingSettings(): Promise<WeddingSettings> {
   const sb = getSupabase();
   if (sb) {
     try {
-      const { data, error } = await sb
-        .from('wedding_settings')
-        .select('*')
-        .eq('wedding_id', DEFAULT_WEDDING_ID)
-        .single();
+      const { data, error } = await withTimeout(() =>
+        sb.from('wedding_settings').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).single()
+      );
       if (data && !error) {
         setLocal('settings', data);
         return data as WeddingSettings;
@@ -129,11 +142,9 @@ export async function getGuests(): Promise<Guest[]> {
   const sb = getSupabase();
   if (sb) {
     try {
-      const { data, error } = await sb
-        .from('guests')
-        .select('*')
-        .eq('wedding_id', DEFAULT_WEDDING_ID)
-        .order('created_at', { ascending: false });
+      const { data, error } = await withTimeout(() =>
+        sb.from('guests').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
+      );
       if (data && !error) {
         setLocal('guests', data);
         return data as Guest[];
@@ -202,11 +213,9 @@ export async function getWishes(): Promise<Wish[]> {
   const sb = getSupabase();
   if (sb) {
     try {
-      const { data, error } = await sb
-        .from('wishes')
-        .select('*')
-        .eq('wedding_id', DEFAULT_WEDDING_ID)
-        .order('created_at', { ascending: false });
+      const { data, error } = await withTimeout(() =>
+        sb.from('wishes').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('created_at', { ascending: false })
+      );
       if (data && !error) {
         setLocal('wishes', data);
         return data as Wish[];
@@ -260,11 +269,9 @@ export async function getGallery(): Promise<GalleryItem[]> {
   const sb = getSupabase();
   if (sb) {
     try {
-      const { data, error } = await sb
-        .from('gallery')
-        .select('*')
-        .eq('wedding_id', DEFAULT_WEDDING_ID)
-        .order('sort_order', { ascending: true });
+      const { data, error } = await withTimeout(() =>
+        sb.from('gallery').select('*').eq('wedding_id', DEFAULT_WEDDING_ID).order('sort_order', { ascending: true })
+      );
       if (data && !error) {
         setLocal('gallery', data);
         return data as GalleryItem[];
@@ -318,10 +325,9 @@ export async function getSpecialMessages(): Promise<SpecialMessage[]> {
   const sb = getSupabase();
   if (sb) {
     try {
-      const { data, error } = await sb
-        .from('special_messages')
-        .select('*')
-        .eq('wedding_id', DEFAULT_WEDDING_ID);
+      const { data, error } = await withTimeout(() =>
+        sb.from('special_messages').select('*').eq('wedding_id', DEFAULT_WEDDING_ID)
+      );
       if (data && !error) {
         setLocal('special_messages', data);
         return data as SpecialMessage[];
