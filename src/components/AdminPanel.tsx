@@ -16,10 +16,10 @@ import {
 interface Props {
   initialSettings: WeddingSettings;
   onSettingsUpdated: (newSettings: WeddingSettings) => void;
-  onOpenSupabaseModal: () => void;
+  onOpenSupabaseModal?: () => void;
 }
 
-export function AdminPanel({ initialSettings, onSettingsUpdated, onOpenSupabaseModal }: Props) {
+export function AdminPanel({ initialSettings, onSettingsUpdated }: Props) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'guests' | 'settings' | 'gallery' | 'wishes' | 'special'>('dashboard');
   
   // Settings Form State
@@ -197,13 +197,10 @@ export function AdminPanel({ initialSettings, onSettingsUpdated, onOpenSupabaseM
               <RefreshCw className={`h-3.5 w-3.5 ${loadingData ? 'animate-spin' : ''}`} />
               <span>Sincronizar Dados</span>
             </button>
-            <button
-              onClick={onOpenSupabaseModal}
-              className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 px-3.5 py-2 rounded-lg text-xs font-bold transition-colors shadow"
-            >
+            <div className="flex items-center gap-1.5 bg-emerald-950 text-emerald-300 border border-emerald-800 px-3.5 py-2 rounded-lg text-xs font-semibold">
               <Database className="h-3.5 w-3.5" />
-              <span>Configurar Supabase</span>
-            </button>
+              <span>Supabase Ativo (Env)</span>
+            </div>
           </div>
         </div>
       </div>

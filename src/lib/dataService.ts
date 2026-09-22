@@ -374,32 +374,21 @@ export async function deleteSpecialMessage(id: string): Promise<void> {
   setLocal('special_messages', updated);
 }
 
-// Upload file to Supabase Storage bucket ('wedding-assets') with fallback to data URL if storage isn't configured yet
+// Upload file to Supabase Storage bucket ('wedding-assets')
 export async function uploadImageToStorage(file: File, folder: string = 'images'): Promise<string> {
   const sb = getSupabase();
-  if (sb) {
-    try {
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-      const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file);
-      if (!uploadError) {
-        const { data } = sb.storage.from('wedding-assets').getPublicUrl(fileName);
-        if (data?.publicUrl) {
-          return data.publicUrl;
-        }
-      } else {
-        console.warn('Supabase storage upload error (bucket might need creation):', uploadError);
-      }
-    } catch (e) {
-      console.warn('Supabase storage upload exception:', e);
-    }
+  if (!sb) {
+    throw new Error('Supabase não está configurado. Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.');
   }
-
-  // Fallback: convert to base64 / object URL for immediate display if storage bucket is not yet set up
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+  const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file);
+  if (uploadError) {
+    throw uploadError;
+  }
+  const { data } = sb.storage.from('wedding-assets').getPublicUrl(fileName);
+  if (!data?.publicUrl) {
+    throw new Error('Não foi possível obter a URL pública do arquivo enviado.');
+  }
+  return data.publicUrl;
 }
