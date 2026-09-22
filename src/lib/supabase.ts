@@ -5,8 +5,12 @@ const supabaseKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || (
 
 let cachedClient: SupabaseClient | null = null;
 
+export function isSupabaseConfigured(): boolean {
+  return Boolean(supabaseUrl && supabaseKey && supabaseUrl.trim() !== '' && supabaseKey.trim() !== '');
+}
+
 export function getSupabase(): SupabaseClient | null {
-  if (!supabaseUrl || !supabaseKey) {
+  if (!isSupabaseConfigured()) {
     return null;
   }
   if (!cachedClient) {
@@ -19,3 +23,4 @@ export function getSupabase(): SupabaseClient | null {
   }
   return cachedClient;
 }
+
