@@ -102,10 +102,11 @@ export async function updateWeddingSettings(settings: Partial<WeddingSettings>):
       const { error } = await sb
         .from('wedding_settings')
         .upsert({ ...updated, wedding_id: DEFAULT_WEDDING_ID }, { onConflict: 'wedding_id' });
-      if (error) throw error;
+      if (error) {
+        console.warn('Supabase update settings warning:', error);
+      }
     } catch (e) {
-      console.error('Supabase update settings error:', e);
-      throw e;
+      console.warn('Supabase update settings exception:', e);
     }
   }
   setLocal('settings', updated);
