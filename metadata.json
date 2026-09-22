@@ -1,0 +1,6 @@
+{
+  "name": "João & Paula - Convite de Casamento",
+  "description": "Convite digital de casamento centralizado e sincronizado via Supabase",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
