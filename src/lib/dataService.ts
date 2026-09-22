@@ -324,9 +324,14 @@ export async function uploadImageToStorage(file: File, folder: string = 'images'
   const fileExt = file.name.split('.').pop() || 'jpg';
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
   
-  const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file);
+  const { error: uploadError } = await sb.storage.from('wedding-assets').upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: true
+  });
+  
   if (uploadError) {
-    throw uploadError;
+    console.error('Supabase Storage Upload Error Details:', uploadError);
+    throw new Error(`Erro no Storage do Supabase: ${uploadError.message || 'Falha ao enviar arquivo'}. Verifique se o bucket 'wedding-assets' existe e possui políticas RLS configuradas.`);
   }
 
   const { data } = sb.storage.from('wedding-assets').getPublicUrl(fileName);

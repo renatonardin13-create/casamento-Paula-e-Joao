@@ -98,9 +98,9 @@ export function AdminPanel({ initialSettings, onSettingsUpdated }: Props) {
     try {
       const url = await uploadImageToStorage(file, 'hero');
       setSettings(prev => ({ ...prev, hero_image_url: url }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload hero error:', err);
-      alert('Erro ao fazer upload da imagem.');
+      alert(err.message || 'Erro ao fazer upload da imagem.');
     } finally {
       setUploadingImage(false);
     }
@@ -113,9 +113,9 @@ export function AdminPanel({ initialSettings, onSettingsUpdated }: Props) {
     try {
       const url = await uploadImageToStorage(file, 'bg');
       setSettings(prev => ({ ...prev, background_image_url: url }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload background error:', err);
-      alert('Erro ao fazer upload da imagem.');
+      alert(err.message || 'Erro ao fazer upload da imagem.');
     } finally {
       setUploadingImage(false);
     }
@@ -135,9 +135,9 @@ export function AdminPanel({ initialSettings, onSettingsUpdated }: Props) {
       setNewCaption('');
       const updatedGal = await getGallery();
       setGallery(updatedGal);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Gallery upload error:', err);
-      alert('Erro ao enviar imagem para a galeria.');
+      alert(err.message || 'Erro ao enviar imagem para a galeria.');
     } finally {
       setUploadingImage(false);
     }
