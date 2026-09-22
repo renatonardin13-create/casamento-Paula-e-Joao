@@ -99,11 +99,23 @@ export async function updateWeddingSettings(settings: Partial<WeddingSettings>):
   const sb = getSupabase();
   if (sb) {
     try {
-      const { error } = await sb
+      const { data: existing } = await sb
         .from('wedding_settings')
-        .upsert({ ...updated, wedding_id: DEFAULT_WEDDING_ID }, { onConflict: 'wedding_id' });
-      if (error) {
-        console.warn('Supabase update settings warning:', error);
+        .select('id')
+        .eq('wedding_id', DEFAULT_WEDDING_ID)
+        .maybeSingle();
+
+      if (existing && existing.id) {
+        const { error } = await sb
+          .from('wedding_settings')
+          .update(updated)
+          .eq('id', existing.id);
+        if (error) console.warn('Supabase update settings error:', error);
+      } else {
+        const { error } = await sb
+          .from('wedding_settings')
+          .insert([{ ...updated, wedding_id: DEFAULT_WEDDING_ID }]);
+        if (error) console.warn('Supabase insert settings error:', error);
       }
     } catch (e) {
       console.warn('Supabase update settings exception:', e);

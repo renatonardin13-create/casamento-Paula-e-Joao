@@ -142,69 +142,70 @@ export function PublicInvitation({ settings, onDataRefreshNeeded, onOpenAdminLog
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-stone-800 text-white px-4 py-20">
-        <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src={settings.hero_image_url} 
-            alt="Capa do Casamento"
-            className="w-full h-full object-cover transition-transform duration-1000 scale-105"
-            style={{ 
-              objectPosition: 'center 15%',
-              opacity: settings.hero_opacity ?? 0.75 
-            }}
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-900/30 to-stone-950/40" />
-
-        <div className="relative z-10 max-w-2xl mx-auto text-center bg-stone-950/85 backdrop-blur-md border border-amber-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6">
-          <span className="inline-block font-sans text-xs uppercase tracking-[0.3em] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-4 py-1.5 rounded-full">
+      {/* Hero Photo Banner */}
+      <section className="relative h-[65vh] sm:h-[75vh] w-full overflow-hidden bg-stone-900">
+        <img 
+          src={settings.hero_image_url} 
+          alt="Capa do Casamento"
+          className="w-full h-full object-cover"
+          style={{ 
+            objectPosition: 'center 20%',
+            opacity: settings.hero_opacity ?? 0.8 
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-85" />
+        <div className="absolute bottom-8 inset-x-0 text-center text-white px-4 z-10">
+          <span className="inline-block font-sans text-xs uppercase tracking-[0.3em] bg-black/50 text-amber-300 border border-amber-500/30 px-4 py-1.5 rounded-full backdrop-blur-md mb-3">
             Com a bênção de Deus e de nossos pais
           </span>
-
-          <h1 className="font-romantic text-5xl sm:text-6xl md:text-7xl text-amber-100 tracking-wide drop-shadow-md">
-            {settings.groom_name} <span className="text-amber-400 font-serif font-light text-3xl sm:text-4xl">&</span> {settings.bride_name}
+          <h1 className="font-romantic text-5xl sm:text-7xl md:text-8xl text-amber-100 tracking-wide drop-shadow-lg">
+            {settings.groom_name} <span className="text-amber-400 font-serif font-light text-3xl sm:text-5xl">&</span> {settings.bride_name}
           </h1>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-stone-300 font-medium pt-1">
-            <span className="flex items-center gap-1.5 bg-stone-900 px-3 py-1.5 rounded-full border border-stone-800">
-              <Calendar className="h-3.5 w-3.5 text-amber-400" />
+      {/* Wedding Details & Countdown Header Section */}
+      <section className="bg-stone-900 text-white pb-16 pt-6 px-4 border-b border-stone-800">
+        <div className="max-w-3xl mx-auto space-y-8 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-stone-300 font-medium">
+            <span className="flex items-center gap-1.5 bg-stone-800 px-4 py-2 rounded-full border border-stone-700">
+              <Calendar className="h-4 w-4 text-amber-400" />
               {formatDateString(settings.wedding_date)}
             </span>
-            <span className="flex items-center gap-1.5 bg-stone-900 px-3 py-1.5 rounded-full border border-stone-800">
-              <Clock className="h-3.5 w-3.5 text-amber-400" />
+            <span className="flex items-center gap-1.5 bg-stone-800 px-4 py-2 rounded-full border border-stone-700">
+              <Clock className="h-4 w-4 text-amber-400" />
               {settings.wedding_time}h
             </span>
-            <span className="flex items-center gap-1.5 bg-stone-900 px-3 py-1.5 rounded-full border border-stone-800">
-              <MapPin className="h-3.5 w-3.5 text-amber-400" />
+            <span className="flex items-center gap-1.5 bg-stone-800 px-4 py-2 rounded-full border border-stone-700">
+              <MapPin className="h-4 w-4 text-amber-400" />
               {settings.venue_name}
             </span>
           </div>
 
           {/* Countdown Timer */}
-          <div className="grid grid-cols-4 gap-2.5 max-w-sm mx-auto pt-2">
-            <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-2.5 text-center shadow-md">
-              <span className="block text-xl sm:text-2xl font-serif-display font-bold text-amber-300">{timeLeft.days}</span>
-              <span className="text-[9px] uppercase tracking-wider text-stone-400">Dias</span>
+          <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
+            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-3 text-center shadow-lg">
+              <span className="block text-2xl sm:text-3xl font-serif-display font-bold text-amber-300">{timeLeft.days}</span>
+              <span className="text-[10px] uppercase tracking-wider text-stone-400">Dias</span>
             </div>
-            <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-2.5 text-center shadow-md">
-              <span className="block text-xl sm:text-2xl font-serif-display font-bold text-amber-300">{timeLeft.hours}</span>
-              <span className="text-[9px] uppercase tracking-wider text-stone-400">Horas</span>
+            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-3 text-center shadow-lg">
+              <span className="block text-2xl sm:text-3xl font-serif-display font-bold text-amber-300">{timeLeft.hours}</span>
+              <span className="text-[10px] uppercase tracking-wider text-stone-400">Horas</span>
             </div>
-            <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-2.5 text-center shadow-md">
-              <span className="block text-xl sm:text-2xl font-serif-display font-bold text-amber-300">{timeLeft.minutes}</span>
-              <span className="text-[9px] uppercase tracking-wider text-stone-400">Min</span>
+            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-3 text-center shadow-lg">
+              <span className="block text-2xl sm:text-3xl font-serif-display font-bold text-amber-300">{timeLeft.minutes}</span>
+              <span className="text-[10px] uppercase tracking-wider text-stone-400">Min</span>
             </div>
-            <div className="bg-stone-900/90 border border-stone-800 rounded-2xl p-2.5 text-center shadow-md">
-              <span className="block text-xl sm:text-2xl font-serif-display font-bold text-amber-300">{timeLeft.seconds}</span>
-              <span className="text-[9px] uppercase tracking-wider text-stone-400">Seg</span>
+            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-3 text-center shadow-lg">
+              <span className="block text-2xl sm:text-3xl font-serif-display font-bold text-amber-300">{timeLeft.seconds}</span>
+              <span className="text-[10px] uppercase tracking-wider text-stone-400">Seg</span>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div>
             <a 
               href="#rsvp" 
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-semibold px-8 py-3 rounded-xl shadow-lg transition-all hover:scale-105 text-sm"
+              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-semibold px-8 py-3.5 rounded-xl shadow-lg transition-all hover:scale-105"
             >
               <Heart className="h-4 w-4 fill-stone-950" />
               <span>Confirmar Presença (RSVP)</span>
